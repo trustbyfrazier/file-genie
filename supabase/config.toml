@@ -1,0 +1,7 @@
+project_id = ""
+
+[functions.upload-file]
+verify_jwt = true
+
+[functions.delete-file]
+verify_jwt = true
