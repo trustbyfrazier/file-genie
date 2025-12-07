@@ -1,4 +1,4 @@
-project_id = ""
+project_id = "pzegbtewdaietsirshfv"
 
 [functions.upload-file]
 verify_jwt = true
