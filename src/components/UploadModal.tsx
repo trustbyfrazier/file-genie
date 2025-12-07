@@ -176,7 +176,7 @@ export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="glass gradient-border sm:max-w-lg">
+      <DialogContent className="glass gradient-border sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl gradient-text">Upload Document</DialogTitle>
         </DialogHeader>
