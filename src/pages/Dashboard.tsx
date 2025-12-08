@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { FileCard } from '@/components/FileCard';
 import { EmptyState } from '@/components/EmptyState';
 import { UploadModal } from '@/components/UploadModal';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [chatFile, setChatFile] = useState<FileRecord | null>(null);
   const { user, session, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -95,10 +97,10 @@ export default function Dashboard() {
   };
 
   const handleChat = (fileId: string) => {
-    toast({
-      title: 'Coming soon',
-      description: 'AI chat feature is under development',
-    });
+    const file = files.find((f) => f.file_id === fileId);
+    if (file) {
+      setChatFile(file);
+    }
   };
 
   const handleSignOut = async () => {
@@ -175,6 +177,13 @@ export default function Dashboard() {
         open={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onSuccess={fetchFiles}
+      />
+
+      <ChatPanel
+        file={chatFile}
+        userId={user?.id || ''}
+        open={!!chatFile}
+        onClose={() => setChatFile(null)}
       />
     </div>
   );
