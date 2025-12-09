@@ -104,20 +104,69 @@ export function useFileChat({ userId, fileId, isOpen }: UseFileChatProps) {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        aiContent += chunk;
+        
+        // Split by newline - n8n sends multiple JSON events per chunk
+        const lines = chunk.split('\n').filter(Boolean);
 
-        // Update the last AI message with accumulated content
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { type: 'ai', content: aiContent, isStreaming: true };
-          return updated;
-        });
+        for (const line of lines) {
+          let event;
+          try {
+            event = JSON.parse(line);
+          } catch {
+            // Skip invalid JSON lines
+            continue;
+          }
+
+          if (event.type === 'begin') {
+            // Reset content for new message
+            aiContent = '';
+          }
+
+          if (event.type === 'item' && event.content) {
+            // Append only the content field
+            aiContent += event.content;
+            
+            // Update UI with accumulated content
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { 
+                type: 'ai', 
+                content: aiContent, 
+                isStreaming: true 
+              };
+              return updated;
+            });
+          }
+
+          if (event.type === 'end') {
+            // Streaming complete
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { 
+                type: 'ai', 
+                content: aiContent, 
+                isStreaming: false 
+              };
+              return updated;
+            });
+          }
+
+          if (event.type === 'error') {
+            throw new Error(event.content || 'AI response error');
+          }
+        }
       }
 
-      // Mark streaming complete
+      // Mark streaming complete (fallback if no 'end' event)
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { type: 'ai', content: aiContent, isStreaming: false };
+        if (updated[updated.length - 1]?.isStreaming) {
+          updated[updated.length - 1] = { 
+            type: 'ai', 
+            content: aiContent, 
+            isStreaming: false 
+          };
+        }
         return updated;
       });
     } catch (err) {
