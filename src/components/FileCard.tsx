@@ -4,6 +4,17 @@ import { FileText, MessageSquare, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileRecord } from '@/types/file';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface FileCardProps {
   file: FileRecord;
@@ -66,19 +77,39 @@ export function FileCard({ file, onDelete, onChat }: FileCardProps) {
               <MessageSquare className="h-4 w-4 mr-1" />
               Chat
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isDeleting}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="glass border-white/10">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to delete this file?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete "{file.friendly_name}".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </CardContent>
