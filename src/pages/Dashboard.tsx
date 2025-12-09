@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LogOut, Loader2 } from 'lucide-react';
+import { Plus, LogOut, Loader2, Bot } from 'lucide-react';
 import { ThreeBackground } from '@/components/ThreeBackground';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -132,6 +132,17 @@ export default function Dashboard() {
             >
               <Plus className="h-5 w-5 mr-2" />
               Upload File
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => toast({
+                title: 'Coming Soon',
+                description: 'Tool is not available now',
+              })}
+              className="border-primary/30 text-muted-foreground hover:text-foreground"
+            >
+              <Bot className="h-5 w-5 mr-2" />
+              Create Agent
             </Button>
             <Button
               variant="ghost"
