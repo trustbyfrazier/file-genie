@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Send, Loader2, MessageSquare } from 'lucide-react';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 import { useFileChat } from '@/hooks/useFileChat';
 import { FileRecord } from '@/types/file';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface ChatPanelProps {
   file: FileRecord | null;
@@ -19,7 +20,7 @@ interface ChatPanelProps {
 export function ChatPanel({ file, userId, open, onClose }: ChatPanelProps) {
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
     messages,
@@ -44,12 +45,25 @@ export function ChatPanel({ file, userId, open, onClose }: ChatPanelProps) {
     }
   }, [messages, streaming]);
 
-  // Focus input when panel opens
+  // Focus textarea when panel opens
   useEffect(() => {
     if (open && !historyLoading) {
-      inputRef.current?.focus();
+      textareaRef.current?.focus();
     }
   }, [open, historyLoading]);
+
+  // Auto-resize textarea
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,11 +73,15 @@ export function ChatPanel({ file, userId, open, onClose }: ChatPanelProps) {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
   };
 
   return (
@@ -72,6 +90,11 @@ export function ChatPanel({ file, userId, open, onClose }: ChatPanelProps) {
         side="right"
         className="w-full sm:w-[45vw] lg:w-[40vw] sm:max-w-none p-0 flex flex-col gap-0"
       >
+        {/* Accessibility - Hidden Title */}
+        <VisuallyHidden>
+          <SheetTitle>Chat with {file?.friendly_name || 'file'}</SheetTitle>
+        </VisuallyHidden>
+        
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur">
           <div className="flex items-center gap-2 min-w-0">
@@ -125,16 +148,17 @@ export function ChatPanel({ file, userId, open, onClose }: ChatPanelProps) {
         {/* Input Area */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 p-4 border-t border-border bg-background/95 backdrop-blur"
+          className="flex items-end gap-2 p-4 border-t border-border bg-background/95 backdrop-blur"
         >
-          <Input
-            ref={inputRef}
+          <Textarea
+            ref={textareaRef}
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Ask about this file..."
             disabled={inputDisabled || historyLoading}
-            className="flex-1"
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+            rows={1}
           />
           <Button
             type="submit"
