@@ -92,35 +92,8 @@ serve(async (req) => {
       body: n8nFormData,
     });
 
-    // Handle n8n response - may be empty or non-JSON
-    const responseText = await n8nResponse.text();
-    console.log("n8n raw response:", responseText);
-
-    let n8nResult: { success?: boolean; error?: string; fileId?: string } = {};
-    
-    if (responseText) {
-      try {
-        n8nResult = JSON.parse(responseText);
-      } catch {
-        console.log("n8n returned non-JSON response, treating as success");
-        // If n8n returns non-JSON but status is OK, treat as success
-        if (n8nResponse.ok) {
-          n8nResult = { success: true };
-        } else {
-          throw new Error(`n8n returned invalid response: ${responseText.substring(0, 100)}`);
-        }
-      }
-    } else {
-      // Empty response - check status code
-      if (n8nResponse.ok) {
-        console.log("n8n returned empty response with OK status, treating as success");
-        n8nResult = { success: true };
-      } else {
-        throw new Error("n8n returned empty response with error status");
-      }
-    }
-
-    console.log("n8n result:", n8nResult);
+    const n8nResult = await n8nResponse.json();
+    console.log("n8n response:", n8nResult);
 
     if (!n8nResponse.ok || !n8nResult.success) {
       throw new Error(n8nResult.error || "n8n processing failed");
