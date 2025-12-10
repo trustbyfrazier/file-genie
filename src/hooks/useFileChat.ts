@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage, ChatHistoryRow } from '@/types/chat';
 
-const N8N_CHAT_WEBHOOK_URL = 'https://prezzboss.app.n8n.cloud/webhook/7c590627-8218-4b7e-bb88-f1bd224be2af';
+const N8N_CHAT_WEBHOOK_URL = 'https://luminaijarvis09.app.n8n.cloud/webhook/7c590627-8218-4b7e-bb88-f1bd224be2af';
 
 interface UseFileChatProps {
   userId: string;
