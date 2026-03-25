@@ -20,12 +20,12 @@ const authSchema = z.object({
 type AuthFormData = z.infer<typeof authSchema>;
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
 
   const {
     register,
@@ -44,7 +44,21 @@ export default function Auth() {
   const onSubmit = async (data: AuthFormData) => {
     setIsLoading(true);
     try {
-      const { error } = isLogin
+      if (mode === 'forgot') {
+        const { error } = await resetPassword(data.email);
+        if (error) {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } else {
+          toast({
+            title: 'Reset link sent!',
+            description: 'Check your email for a password reset link.',
+          });
+          setMode('login');
+        }
+        return;
+      }
+
+      const { error } = mode === 'login'
         ? await signIn(data.email, data.password)
         : await signUp(data.email, data.password);
 
@@ -55,12 +69,8 @@ export default function Auth() {
         } else if (error.message.includes('User already registered')) {
           message = 'An account with this email already exists';
         }
-        toast({
-          title: 'Error',
-          description: message,
-          variant: 'destructive',
-        });
-      } else if (!isLogin) {
+        toast({ title: 'Error', description: message, variant: 'destructive' });
+      } else if (mode === 'signup') {
         toast({
           title: 'Account created!',
           description: 'Please check your email to verify your account.',
@@ -82,12 +92,14 @@ export default function Auth() {
           </div>
 
           <h1 className="text-2xl font-bold text-center mb-2">
-            {isLogin ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset password'}
           </h1>
           <p className="text-muted-foreground text-center mb-8">
-            {isLogin
+            {mode === 'login'
               ? 'Sign in to access your files'
-              : 'Start organizing your documents'}
+              : mode === 'signup'
+              ? 'Start organizing your documents'
+              : 'Enter your email to receive a reset link'}
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -108,33 +120,47 @@ export default function Auth() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 bg-muted/50 border-white/10 focus:border-primary"
-                  {...register('password')}
-                />
+            {mode !== 'forgot' && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 bg-muted/50 border-white/10 focus:border-primary"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+              </div>
+            )}
+
+            {mode === 'login' && (
+              <div className="text-right">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setMode('forgot')}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  Forgot password?
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div>
+            )}
 
             <Button
               type="submit"
@@ -145,7 +171,7 @@ export default function Auth() {
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? 'Sign in' : 'Create account'}
+                  {mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </>
               )}
@@ -153,15 +179,25 @@ export default function Auth() {
           </form>
 
           <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </button>
+            {mode === 'forgot' ? (
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Back to sign in
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {mode === 'login'
+                  ? "Don't have an account? Sign up"
+                  : 'Already have an account? Sign in'}
+              </button>
+            )}
           </div>
         </div>
       </div>
