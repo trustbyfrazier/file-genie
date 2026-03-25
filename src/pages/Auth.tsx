@@ -44,7 +44,21 @@ export default function Auth() {
   const onSubmit = async (data: AuthFormData) => {
     setIsLoading(true);
     try {
-      const { error } = isLogin
+      if (mode === 'forgot') {
+        const { error } = await resetPassword(data.email);
+        if (error) {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } else {
+          toast({
+            title: 'Reset link sent!',
+            description: 'Check your email for a password reset link.',
+          });
+          setMode('login');
+        }
+        return;
+      }
+
+      const { error } = mode === 'login'
         ? await signIn(data.email, data.password)
         : await signUp(data.email, data.password);
 
@@ -55,12 +69,8 @@ export default function Auth() {
         } else if (error.message.includes('User already registered')) {
           message = 'An account with this email already exists';
         }
-        toast({
-          title: 'Error',
-          description: message,
-          variant: 'destructive',
-        });
-      } else if (!isLogin) {
+        toast({ title: 'Error', description: message, variant: 'destructive' });
+      } else if (mode === 'signup') {
         toast({
           title: 'Account created!',
           description: 'Please check your email to verify your account.',
