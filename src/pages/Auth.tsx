@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().optional(),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -30,9 +30,15 @@ export default function Auth() {
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
   useEffect(() => {
@@ -42,6 +48,16 @@ export default function Auth() {
   }, [user, navigate]);
 
   const onSubmit = async (data: AuthFormData) => {
+    if (mode !== 'forgot' && (!data.password || data.password.length < 6)) {
+      setError('password', {
+        type: 'manual',
+        message: 'Password must be at least 6 characters',
+      });
+      return;
+    }
+
+    clearErrors('password');
+
     setIsLoading(true);
     try {
       if (mode === 'forgot') {
