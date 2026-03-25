@@ -92,12 +92,14 @@ export default function Auth() {
           </div>
 
           <h1 className="text-2xl font-bold text-center mb-2">
-            {isLogin ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset password'}
           </h1>
           <p className="text-muted-foreground text-center mb-8">
-            {isLogin
+            {mode === 'login'
               ? 'Sign in to access your files'
-              : 'Start organizing your documents'}
+              : mode === 'signup'
+              ? 'Start organizing your documents'
+              : 'Enter your email to receive a reset link'}
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
